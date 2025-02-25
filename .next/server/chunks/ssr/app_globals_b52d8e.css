@@ -313,6 +313,8 @@ body {
   color: hsl(var(--foreground));
   font-feature-settings: "rlig" 1, "calt" 1;
   font-family: Space Grotesk, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
+  font-size: 1.25rem;
+  line-height: 1.6;
 }
 
 .container {
@@ -337,6 +339,8 @@ body {
 .prose :where(p):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
   margin-top: 1.25em;
   margin-bottom: 1.25em;
+  font-size: 1.25rem;
+  line-height: 1.75;
 }
 
 .prose :where([class~="lead"]):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
@@ -724,7 +728,7 @@ body {
   --tw-prose-invert-pre-bg: #00000080;
   --tw-prose-invert-th-borders: #4b5563;
   --tw-prose-invert-td-borders: #374151;
-  font-size: 1rem;
+  font-size: 1.25rem;
   line-height: 1.75;
 }
 
@@ -1987,6 +1991,21 @@ body {
 
 .\[\&\>\*\]\:border-none > * {
   border-style: none;
+}
+
+.\[\&\>h1\]\:text-4xl > h1 {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
+.\[\&\>h2\]\:text-3xl > h2 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.\[\&\>h3\]\:text-2xl > h3 {
+  font-size: 1.5rem;
+  line-height: 2rem;
 }
 
 .\[\&\>p\]\:my-4 > p {

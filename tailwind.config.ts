@@ -26,6 +26,16 @@ const config: Config = {
         serif: ['var(--font-playfair)'],
       },
       typography: {
+        DEFAULT: {
+          css: {
+            fontSize: '1.25rem',
+            lineHeight: '1.75',
+            p: {
+              fontSize: '1.25rem',
+              lineHeight: '1.75',
+            },
+          }
+        },
         invert: {
           css: {
             '--tw-prose-body': 'hsl(var(--muted-foreground))',

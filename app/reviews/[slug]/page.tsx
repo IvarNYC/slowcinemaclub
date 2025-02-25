@@ -204,18 +204,18 @@ function MovieDetails({ movie }: { movie: Movie }) {
       <div className="space-y-6">
         <div className="flex flex-col gap-2">
           <h2 className="text-sm uppercase tracking-wider text-muted-foreground">Director</h2>
-          <p className="text-lg">{movie.director}</p>
+          <p className="text-2xl">{movie.director}</p>
         </div>
         
         {movie.cast && movie.cast.trim() !== '' && (
           <div className="flex flex-col gap-2">
             <h2 className="text-sm uppercase tracking-wider text-muted-foreground">Cast</h2>
-            <p className="text-lg">{movie.cast}</p>
+            <p className="text-2xl">{movie.cast}</p>
           </div>
         )}
       </div>
 
-      <div className="prose prose-neutral dark:prose-invert max-w-none text-lg [&>p]:text-muted-foreground [&>p]:my-4 first:[&>p]:mt-0 prose-hr:hidden [&>*]:border-none [&_*]:border-none">
+      <div className="prose prose-neutral dark:prose-invert max-w-none text-2xl [&>p]:text-muted-foreground [&>p]:my-4 first:[&>p]:mt-0 prose-hr:hidden [&>*]:border-none [&_*]:border-none [&>h1]:text-4xl [&>h2]:text-3xl [&>h3]:text-2xl">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {movie.description}
         </ReactMarkdown>

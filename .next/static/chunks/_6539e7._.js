@@ -203,6 +203,7 @@ __turbopack_esm__({
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$MovieCard$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_import__("[project]/app/components/MovieCard.tsx [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$swr$2f$dist$2f$index$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__ = __turbopack_import__("[project]/node_modules/swr/dist/index/index.mjs [app-client] (ecmascript) <locals>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__ = __turbopack_import__("[project]/node_modules/lucide-react/dist/esm/icons/chevron-down.js [app-client] (ecmascript) <export default as ChevronDown>");
 ;
 var _s = __turbopack_refresh__.signature();
@@ -210,30 +211,42 @@ var _s = __turbopack_refresh__.signature();
 ;
 ;
 ;
+;
 const sortOptions = [
     {
-        value: 'added',
-        label: 'Added (newest first)'
+        label: 'Recently Added',
+        value: 'added'
     },
     {
-        value: 'title',
-        label: 'Title (alphabetical)'
+        label: 'Title (A-Z)',
+        value: 'title'
     },
     {
-        value: 'year',
-        label: 'Year (newest first)'
+        label: 'Year (New to Old)',
+        value: 'year'
     },
     {
-        value: 'length',
-        label: 'Length (longest first)'
+        label: 'Length (Short to Long)',
+        value: 'length'
     },
     {
-        value: 'rating',
-        label: 'Rating (highest first)'
+        label: 'Rating (High to Low)',
+        value: 'rating'
     }
 ];
+// Fetch movies with SWR
+const fetcher = (url)=>fetch(url, {
+        // Add cache control headers for the browser
+        cache: 'no-store',
+        headers: {
+            'pragma': 'no-cache',
+            'cache-control': 'no-cache'
+        }
+    }).then((res)=>{
+        if (!res.ok) throw new Error('Failed to fetch movies');
+        return res.json();
+    });
 function MovieGrid({ movies, sortBy }) {
-    // Sort movies based on the selected option
     const sortedMovies = [
         ...movies
     ].sort((a, b)=>{
@@ -243,61 +256,49 @@ function MovieGrid({ movies, sortBy }) {
             case 'year':
                 return parseInt(b.year) - parseInt(a.year);
             case 'length':
-                return parseInt(b.duration) - parseInt(a.duration);
+                const getDuration = (movie)=>{
+                    if (!movie.duration) return 0;
+                    const match = movie.duration.match(/^(\d+)m$/);
+                    return match ? parseInt(match[1]) : 0;
+                };
+                return getDuration(a) - getDuration(b);
             case 'rating':
                 return b.rating - a.rating;
             case 'added':
             default:
-                return new Date(b.updatedAd).getTime() - new Date(a.updatedAd).getTime();
+                // Assume updatedAd is a date string
+                return new Date(b.updatedAd || 0).getTime() - new Date(a.updatedAd || 0).getTime();
         }
     });
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "grid gap-6 sm:grid-cols-2 lg:grid-cols-3",
+        className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8",
         children: sortedMovies.map((movie, index)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$MovieCard$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["MovieCard"], {
                 movie: movie,
                 index: index
             }, movie._id, false, {
                 fileName: "[project]/app/reviews/page.tsx",
-                lineNumber: 38,
+                lineNumber: 58,
                 columnNumber: 9
             }, this))
     }, void 0, false, {
         fileName: "[project]/app/reviews/page.tsx",
-        lineNumber: 36,
+        lineNumber: 56,
         columnNumber: 5
     }, this);
 }
 _c = MovieGrid;
 function ReviewsPage() {
     _s();
-    const [movies, setMovies] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
     const [sortBy, setSortBy] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('added');
     const [isDropdownOpen, setIsDropdownOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
-    const [isLoading, setIsLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
-    const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const dropdownRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
-        "ReviewsPage.useEffect": ()=>{
-            const fetchMovies = {
-                "ReviewsPage.useEffect.fetchMovies": async ()=>{
-                    try {
-                        const response = await fetch('/api/movies');
-                        if (!response.ok) {
-                            throw new Error(`Error fetching movies: ${response.status}`);
-                        }
-                        const data = await response.json();
-                        setMovies(data);
-                        setIsLoading(false);
-                    } catch (err) {
-                        console.error('Failed to fetch movies:', err);
-                        setError('Failed to load movies. Please try again later.');
-                        setIsLoading(false);
-                    }
-                }
-            }["ReviewsPage.useEffect.fetchMovies"];
-            fetchMovies();
-        }
-    }["ReviewsPage.useEffect"], []);
+    // Use SWR for data fetching with revalidation
+    const { data: movies, error, isLoading } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$swr$2f$dist$2f$index$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["default"])('/api/movies', fetcher, {
+        revalidateOnFocus: true,
+        revalidateOnReconnect: true,
+        refreshInterval: 30000,
+        dedupingInterval: 5000 // Only dedupe requests within 5 seconds
+    });
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "ReviewsPage.useEffect": ()=>{
             const handleClickOutside = {
@@ -329,7 +330,7 @@ function ReviewsPage() {
                         children: "Film Reviews"
                     }, void 0, false, {
                         fileName: "[project]/app/reviews/page.tsx",
-                        lineNumber: 95,
+                        lineNumber: 102,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -350,20 +351,20 @@ function ReviewsPage() {
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/reviews/page.tsx",
-                                        lineNumber: 105,
+                                        lineNumber: 112,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__["ChevronDown"], {
                                         className: `h-4 w-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`
                                     }, void 0, false, {
                                         fileName: "[project]/app/reviews/page.tsx",
-                                        lineNumber: 106,
+                                        lineNumber: 113,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/reviews/page.tsx",
-                                lineNumber: 98,
+                                lineNumber: 105,
                                 columnNumber: 11
                             }, this),
                             isDropdownOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -380,29 +381,29 @@ function ReviewsPage() {
                                             children: option.label
                                         }, option.value, false, {
                                             fileName: "[project]/app/reviews/page.tsx",
-                                            lineNumber: 117,
+                                            lineNumber: 124,
                                             columnNumber: 19
                                         }, this))
                                 }, void 0, false, {
                                     fileName: "[project]/app/reviews/page.tsx",
-                                    lineNumber: 115,
+                                    lineNumber: 122,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/app/reviews/page.tsx",
-                                lineNumber: 110,
+                                lineNumber: 117,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/reviews/page.tsx",
-                        lineNumber: 97,
+                        lineNumber: 104,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/reviews/page.tsx",
-                lineNumber: 94,
+                lineNumber: 101,
                 columnNumber: 7
             }, this),
             isLoading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -412,21 +413,21 @@ function ReviewsPage() {
                     children: "Loading reviews..."
                 }, void 0, false, {
                     fileName: "[project]/app/reviews/page.tsx",
-                    lineNumber: 135,
+                    lineNumber: 142,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/reviews/page.tsx",
-                lineNumber: 134,
+                lineNumber: 141,
                 columnNumber: 9
             }, this) : error ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "text-center p-8 text-red-500",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                        children: error
+                        children: error.message || 'Failed to load movies. Please try again later.'
                     }, void 0, false, {
                         fileName: "[project]/app/reviews/page.tsx",
-                        lineNumber: 139,
+                        lineNumber: 146,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -435,30 +436,34 @@ function ReviewsPage() {
                         children: "Try Again"
                     }, void 0, false, {
                         fileName: "[project]/app/reviews/page.tsx",
-                        lineNumber: 140,
+                        lineNumber: 147,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/reviews/page.tsx",
-                lineNumber: 138,
+                lineNumber: 145,
                 columnNumber: 9
-            }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(MovieGrid, {
+            }, this) : movies ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(MovieGrid, {
                 movies: movies,
                 sortBy: sortBy
             }, void 0, false, {
                 fileName: "[project]/app/reviews/page.tsx",
-                lineNumber: 148,
+                lineNumber: 155,
                 columnNumber: 9
-            }, this)
+            }, this) : null
         ]
     }, void 0, true, {
         fileName: "[project]/app/reviews/page.tsx",
-        lineNumber: 93,
+        lineNumber: 100,
         columnNumber: 5
     }, this);
 }
-_s(ReviewsPage, "TsJs+uSaLuLXjMsDrbdweMZ9030=");
+_s(ReviewsPage, "A18Im0eza6a+YJswhHLx913Oks8=", false, function() {
+    return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$swr$2f$dist$2f$index$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["default"]
+    ];
+});
 _c1 = ReviewsPage;
 var _c, _c1;
 __turbopack_refresh__.register(_c, "MovieGrid");
