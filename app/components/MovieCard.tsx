@@ -63,6 +63,8 @@ export function MovieCard({ movie, index }: { movie: Movie; index: number }) {
                 </>
               )}
               <span>{movie.duration} min</span>
+              <span className="text-muted-foreground/60">•</span>
+              <span>{movie.year}</span>
             </div>
           </div>
         </div>
