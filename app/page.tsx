@@ -275,7 +275,7 @@ export default async function Home() {
               New Articles Coming in March
             </h3>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              We're working on a series of in-depth articles exploring the influence of slow cinema 
+              We&apos;re working on a series of in-depth articles exploring the influence of slow cinema 
               on contemporary filmmaking. Stay tuned for thought-provoking analysis and insights.
             </p>
           </div>
@@ -289,7 +289,7 @@ export default async function Home() {
             About Slow Cinema Club
           </h2>
           <p className="text-muted-foreground">
-          We're a dedicated online space for cinephiles who crave deeper engagement with arthouse and experimental cinema. From the meditative narratives of Andrei Tarkovsky to the poetic, dreamlike frames of Wong Kar-wai and the intimate storytelling of Agnès Varda, our platform goes beyond the mainstream to offer rich, thought-provoking analysis.
+          We&apos;re a dedicated online space for cinephiles who crave deeper engagement with arthouse and experimental cinema. From the meditative narratives of Andrei Tarkovsky to the poetic, dreamlike frames of Wong Kar-wai and the intimate storytelling of Agnès Varda, our platform goes beyond the mainstream to offer rich, thought-provoking analysis.
 </p>
         </div>
         <div className="space-y-4">
