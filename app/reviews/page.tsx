@@ -1,159 +1,199 @@
-'use client';
+export const dynamic = 'force-dynamic';
+// Set revalidation time to a much more frequent interval
+export const revalidate = 60; // Revalidate every minute
 
-import { useState, useEffect, useRef } from "react";
-import { MovieCard, Movie } from "@/app/components/MovieCard";
-import { ChevronDown } from 'lucide-react';
-import useSWR from 'swr';
+import { Suspense } from "react";
+import Link from "next/link";
+import { MovieCard } from "@/app/components/MovieCard";
+import { getCollection } from "@/lib/mongodb";
+import Script from 'next/script';
 
-type SortOption = 'added' | 'title' | 'year' | 'length' | 'rating';
-
-const sortOptions = [
-  { label: 'Recently Added', value: 'added' },
-  { label: 'Title (A-Z)', value: 'title' },
-  { label: 'Year (New to Old)', value: 'year' },
-  { label: 'Length (Short to Long)', value: 'length' },
-  { label: 'Rating (High to Low)', value: 'rating' }
-];
-
-// Fetch movies with SWR
-const fetcher = (url: string) => 
-  fetch(url, {
-    // Add cache control headers for the browser
-    cache: 'no-store',
-    headers: {
-      'pragma': 'no-cache',
-      'cache-control': 'no-cache',
-    }
-  }).then(res => {
-    if (!res.ok) throw new Error('Failed to fetch movies');
-    return res.json();
-  });
-
-function MovieGrid({ movies, sortBy }: { movies: Movie[], sortBy: SortOption }) {
-  const sortedMovies = [...movies].sort((a, b) => {
-    switch (sortBy) {
-      case 'title':
-        return a.title.localeCompare(b.title);
-      case 'year':
-        return parseInt(b.year) - parseInt(a.year);
-      case 'length':
-        const getDuration = (movie: Movie) => {
-          if (!movie.duration) return 0;
-          const match = movie.duration.match(/^(\d+)m$/);
-          return match ? parseInt(match[1]) : 0;
-        };
-        return getDuration(a) - getDuration(b);
-      case 'rating':
-        return b.rating - a.rating;
-      case 'added':
-      default:
-        // Assume updatedAd is a date string
-        return new Date(b.updatedAd || 0).getTime() - new Date(a.updatedAd || 0).getTime();
-    }
-  });
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {sortedMovies.map((movie, index) => (
-        <MovieCard key={movie._id} movie={movie} index={index} />
-      ))}
-    </div>
-  );
+export interface Movie {
+  _id: string;
+  title: string;
+  imageurl: string;
+  imagepreviewurl: string;
+  director: string;
+  cast: string;
+  duration: string;
+  year: string;
+  language: string;
+  description: string;
+  rating: number;
+  votecount: number;
+  updatedat: string;
+  updatedAd: string;
+  url: string;
 }
 
-export default function ReviewsPage() {
-  const [sortBy, setSortBy] = useState<SortOption>('added');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  
-  // Use SWR for data fetching with revalidation
-  const { data: movies, error, isLoading } = useSWR<Movie[]>(
-    '/api/movies', 
-    fetcher,
-    {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      refreshInterval: 30000, // Refresh every 30 seconds
-      dedupingInterval: 5000 // Only dedupe requests within 5 seconds
-    }
-  );
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
+// Add structured data for the reviews collection page
+function ReviewsStructuredData({ movies }: { movies: Movie[] }) {
+  // Create a safe date parsing function for structured data
+  const getValidDate = (dateStr: string | undefined) => {
+    if (!dateStr) return new Date();
+    
+    try {
+      const date = new Date(dateStr);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return new Date(); // Fallback to current date if invalid
       }
-    };
+      return date;
+    } catch (_e) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      return new Date(); // Fallback to current date on error
+    }
+  };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleSortChange = (option: SortOption) => {
-    setSortBy(option);
-    setIsDropdownOpen(false);
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Film Reviews - Slow Cinema Club',
+    description: 'In-depth analysis and reviews of arthouse and experimental cinema. Discover thoughtful critiques of slow cinema, independent films, and avant-garde masterpieces.',
+    url: 'https://slowcinemaclub.com/reviews',
+    dateModified: new Date().toISOString(), // Add current date for the collection page
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: movies.slice(0, 10).map((movie, index) => {
+        const validDate = getValidDate(movie.updatedat || movie.updatedAd);
+        
+        return {
+          '@type': 'ListItem',
+          position: index + 1,
+          item: {
+            '@type': 'Review',
+            datePublished: validDate.toISOString(),
+            reviewBody: movie.description.substring(0, 150) + '...',
+            itemReviewed: {
+              '@type': 'Movie',
+              name: movie.title,
+              director: {
+                '@type': 'Person',
+                name: movie.director
+              },
+              datePublished: movie.year
+            }
+          }
+        };
+      })
+    }
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-serif">Film Reviews</h1>
-        
-        <div className="relative" ref={dropdownRef}>
-          <button
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/15 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            aria-expanded={isDropdownOpen}
-            aria-haspopup="listbox"
-            aria-controls="sort-options"
-          >
-            <span>Sort: {sortOptions.find(option => option.value === sortBy)?.label}</span>
-            <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
+    <Script id="reviews-structured-data" type="application/ld+json">
+      {JSON.stringify(structuredData)}
+    </Script>
+  );
+}
+
+// Get all movies for display
+async function getMovies(): Promise<Movie[]> {
+  try {
+    const collection = await getCollection('scc', 'movies');
+    
+    const movies = await collection.find({}, {
+      projection: {
+        _id: 1,
+        title: 1,
+        imageurl: 1,
+        imagepreviewurl: 1,
+        director: 1,
+        cast: 1,
+        duration: 1,
+        year: 1,
+        language: 1,
+        description: 1,
+        rating: 1,
+        votecount: 1,
+        updatedat: 1,
+        url: 1
+      },
+      // Sort by updatedat field descending (newest first)
+      sort: { updatedat: -1 }
+    }).toArray();
+
+    // Create a safe date parsing function
+    const getValidDate = (dateStr: string | undefined) => {
+      if (!dateStr) return new Date();
+      
+      try {
+        const date = new Date(dateStr);
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+          return new Date(); // Fallback to current date if invalid
+        }
+        return date;
+      } catch (_e) { // eslint-disable-line @typescript-eslint/no-unused-vars
+        return new Date(); // Fallback to current date on error
+      }
+    };
+
+    return movies.map(movie => {
+      const validDate = getValidDate(movie.updatedat);
+      
+      return {
+        ...movie,
+        _id: movie._id.toString(),
+        updatedAd: validDate.toISOString() // Ensure we have a valid ISO string for updatedAd
+      } as Movie;
+    });
+  } catch (error) {
+    console.error('Failed to fetch movies:', error);
+    return [];
+  }
+}
+
+export default async function ReviewsPage() {
+  const movies = await getMovies();
+  
+  return (
+    <>
+      <ReviewsStructuredData movies={movies} />
+      
+      <div>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-serif" id="reviews-heading">Film Reviews</h1>
           
-          {isDropdownOpen && (
-            <div 
-              id="sort-options"
-              role="listbox"
-              className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 z-10 overflow-hidden transform origin-top-right transition-all animate-in fade-in-50 zoom-in-95 duration-100"
+          <div className="flex gap-2">
+            <Link 
+              href="/feed.xml"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
             >
-              <div className="py-1">
-                {sortOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${sortBy === option.value ? 'bg-slate-100 dark:bg-slate-800 font-medium text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                    onClick={() => handleSortChange(option.value as SortOption)}
-                    role="option"
-                    aria-selected={sortBy === option.value}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                <path d="M4 11a9 9 0 0 1 9 9" />
+                <path d="M4 4a16 16 0 0 1 16 16" />
+                <circle cx="5" cy="19" r="1" />
+              </svg>
+              RSS Feed
+            </Link>
+            
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-black/5 dark:bg-white/10">
+              {movies.length} Reviews
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {movies.map((movie, index) => (
+            <Suspense key={movie._id} fallback={<MovieCardSkeleton />}>
+              <MovieCard movie={movie} index={index} />
+            </Suspense>
+          ))}
         </div>
       </div>
+    </>
+  );
+}
 
-      {isLoading ? (
-        <div className="flex justify-center p-12">
-          <div className="animate-pulse">Loading reviews...</div>
-        </div>
-      ) : error ? (
-        <div className="text-center p-8 text-red-500">
-          <p>{error.message || 'Failed to load movies. Please try again later.'}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-md text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      ) : movies ? (
-        <MovieGrid movies={movies} sortBy={sortBy} />
-      ) : null}
+function MovieCardSkeleton() {
+  return (
+    <div className="group relative flex flex-col overflow-hidden rounded-xl bg-muted/30 shadow-sm transition-all hover:shadow-md" aria-hidden="true">
+      <div className="aspect-[16/9] bg-muted animate-pulse" />
+      <div className="flex flex-col space-y-2 p-4">
+        <div className="h-6 bg-muted rounded w-3/4 animate-pulse" />
+        <div className="h-4 bg-muted rounded w-1/2 animate-pulse" />
+        <div className="h-4 bg-muted rounded w-full animate-pulse mt-2" />
+        <div className="h-4 bg-muted rounded w-full animate-pulse" />
+      </div>
     </div>
   );
 }
