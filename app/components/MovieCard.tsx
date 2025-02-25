@@ -12,7 +12,7 @@ export interface Movie {
   year: string;
   description: string;
   rating: number;
-  updatedat: string;
+  updatedAd: string;
   url: string;
   language: string;
   duration: string;

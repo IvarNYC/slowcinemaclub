@@ -1,79 +1,57 @@
-import { NextResponse } from 'next/server';
-import { getCollection } from '@/lib/mongodb';
-import { headers } from 'next/headers';
-import { Sort } from 'mongodb';
+import { getCollection } from "@/lib/mongodb";
+import { NextResponse } from "next/server";
+import { Document } from 'mongodb';
 
-// Cache the response for 1 hour
+// Enable ISR with 1 hour revalidation
 export const revalidate = 3600;
 
-export async function GET(request: Request) {
-  const headersList = headers();
-  const referer = headersList.get('referer') || 'Unknown';
-
+export async function GET() {
   try {
-    const moviesCollection = await getCollection('scc', 'movies');
+    const collection = await getCollection('scc', 'movies');
     
-    // Get query parameters
-    const url = new URL(request.url);
-    const limit = parseInt(url.searchParams.get('limit') || '50');
-    const skip = parseInt(url.searchParams.get('skip') || '0');
-    const sort = url.searchParams.get('sort') || 'updatedat';
-    const order = url.searchParams.get('order') === 'asc' ? 1 : -1;
-    
-    // Validate parameters
-    if (isNaN(limit) || limit < 1 || limit > 100) {
-      return NextResponse.json(
-        { error: 'Invalid limit parameter. Must be between 1 and 100.' },
-        { status: 400 }
-      );
-    }
-    
-    if (isNaN(skip) || skip < 0) {
-      return NextResponse.json(
-        { error: 'Invalid skip parameter. Must be >= 0.' },
-        { status: 400 }
-      );
-    }
-    
-    // Build sort object
-    const sortObj = { [sort]: order } as Sort;
-    
-    // Get total count for pagination
-    const total = await moviesCollection.countDocuments();
-    
-    // Fetch movies with pagination and sorting
-    const movies = await moviesCollection
-      .find({})
-      .sort(sortObj)
-      .skip(skip)
-      .limit(limit)
-      .toArray();
-    
-    // Add cache control headers
-    const response = NextResponse.json({
-      movies,
-      pagination: {
-        total,
-        limit,
-        skip,
-        hasMore: skip + limit < total
-      }
-    });
-    
-    response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
-    
-    return response;
-  } catch (error) {
-    console.error('Error fetching movies:', error, { referer });
-    
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { 
-        status: 500,
-        headers: {
-          'Cache-Control': 'no-store'
+    const moviesRaw = await collection
+      .find(
+        {},
+        {
+          projection: {
+            _id: 1,
+            title: 1,
+            imagepreviewurl: 1,
+            director: 1,
+            year: 1,
+            description: 1,
+            rating: 1,
+            duration: 1,
+            updatedAd: 1,
+            url: 1,
+            language: 1
+          },
         }
-      }
+      )
+      .sort({ updatedAd: -1 })
+      .toArray();
+
+    // Serialize MongoDB documents to plain objects and ensure all required fields are present
+    const movies = moviesRaw.map((movie: Document) => ({
+      _id: movie._id.toString(),
+      title: movie.title as string,
+      imagepreviewurl: movie.imagepreviewurl as string,
+      director: movie.director as string,
+      year: movie.year as string,
+      description: movie.description as string,
+      rating: movie.rating as number,
+      duration: movie.duration as string,
+      updatedAd: movie.updatedAd as string,
+      url: movie.url as string,
+      language: (movie.language as string) || ''
+    }));
+
+    return NextResponse.json(movies);
+  } catch (error) {
+    console.error('Error fetching movies:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch movies' },
+      { status: 500 }
     );
   }
 } 

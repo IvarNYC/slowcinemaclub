@@ -1,13 +1,14 @@
 {
   "pages": {
-    "/reviews/[slug]/page": [
+    "/reviews/page": [
       "static/chunks/_22d2ba._.js",
       "static/chunks/app_favicon_ico_mjs_53e3fe._.js",
       "static/chunks/[root of the server]__df5948._.css",
       "static/chunks/_d32371._.js",
       "static/chunks/app_layout_tsx_61af54._.js",
-      "static/chunks/_cc71ac._.js",
-      "static/chunks/app_reviews_[slug]_page_tsx_904a55._.js",
+      "static/chunks/node_modules_9e5457._.js",
+      "static/chunks/_6539e7._.js",
+      "static/chunks/app_reviews_page_tsx_904a55._.js",
       "static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc._.js",
       "static/chunks/node_modules_next_dist_compiled_107ce8._.js",
       "static/chunks/node_modules_next_dist_client_523921._.js",
@@ -17,15 +18,14 @@
       "static/chunks/_e69f0d._.js",
       "static/chunks/_d95469._.js"
     ],
-    "/reviews/page": [
+    "/reviews/[slug]/page": [
       "static/chunks/_22d2ba._.js",
       "static/chunks/app_favicon_ico_mjs_53e3fe._.js",
       "static/chunks/[root of the server]__df5948._.css",
       "static/chunks/_d32371._.js",
       "static/chunks/app_layout_tsx_61af54._.js",
-      "static/chunks/node_modules_next_15251b._.js",
-      "static/chunks/_f11b8a._.js",
-      "static/chunks/app_reviews_page_tsx_904a55._.js",
+      "static/chunks/_cc71ac._.js",
+      "static/chunks/app_reviews_[slug]_page_tsx_904a55._.js",
       "static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc._.js",
       "static/chunks/node_modules_next_dist_compiled_107ce8._.js",
       "static/chunks/node_modules_next_dist_client_523921._.js",

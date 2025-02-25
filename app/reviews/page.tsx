@@ -1,90 +1,152 @@
-import { Suspense } from "react";
-import { getCollection } from "@/lib/mongodb";
+'use client';
+
+import { useState, useEffect, useRef } from "react";
 import { MovieCard, Movie } from "@/app/components/MovieCard";
-import { Metadata } from 'next';
-import { Document } from 'mongodb';
+import { ChevronDown } from 'lucide-react';
 
-// Enable ISR with 1 hour revalidation
-export const revalidate = 3600;
+type SortOption = 'added' | 'title' | 'year' | 'length' | 'rating';
 
-// Add metadata for the reviews page
-export const metadata: Metadata = {
-  title: 'Film Reviews - Slow Cinema Club',
-  description: 'In-depth analysis and reviews of arthouse and experimental cinema. Discover thoughtful critiques of slow cinema, independent films, and avant-garde masterpieces.',
-  openGraph: {
-    title: 'Film Reviews - Slow Cinema Club',
-    description: 'In-depth analysis and reviews of arthouse and experimental cinema. Discover thoughtful critiques of slow cinema, independent films, and avant-garde masterpieces.',
-    type: 'website',
-  },
-};
+const sortOptions = [
+  { value: 'added', label: 'Added (newest first)' },
+  { value: 'title', label: 'Title (alphabetical)' },
+  { value: 'year', label: 'Year (newest first)' },
+  { value: 'length', label: 'Length (longest first)' },
+  { value: 'rating', label: 'Rating (highest first)' }
+];
 
-async function getAllMovies(): Promise<Movie[]> {
-  try {
-    const collection = await getCollection('scc', 'movies');
-    
-    const moviesRaw = await collection
-      .find(
-        {},
-        {
-          projection: {
-            _id: 1,
-            title: 1,
-            imagepreviewurl: 1,
-            director: 1,
-            year: 1,
-            description: 1,
-            rating: 1,
-            duration: 1,
-            updatedat: 1,
-            url: 1,
-            language: 1
-          },
-        }
-      )
-      .sort({ updatedat: -1 })
-      .toArray();
+function MovieGrid({ movies, sortBy }: { movies: Movie[], sortBy: SortOption }) {
+  // Sort movies based on the selected option
+  const sortedMovies = [...movies].sort((a, b) => {
+    switch (sortBy) {
+      case 'title':
+        return a.title.localeCompare(b.title);
+      case 'year':
+        return parseInt(b.year) - parseInt(a.year);
+      case 'length':
+        return parseInt(b.duration) - parseInt(a.duration);
+      case 'rating':
+        return b.rating - a.rating;
+      case 'added':
+      default:
+        return new Date(b.updatedAd).getTime() - new Date(a.updatedAd).getTime();
+    }
+  });
 
-    // Serialize MongoDB documents to plain objects and ensure all required fields are present
-    const movies: Movie[] = moviesRaw.map((movie: Document) => ({
-      _id: movie._id.toString(),
-      title: movie.title as string,
-      imagepreviewurl: movie.imagepreviewurl as string,
-      director: movie.director as string,
-      year: movie.year as string,
-      description: movie.description as string,
-      rating: movie.rating as number,
-      duration: movie.duration as string,
-      updatedat: movie.updatedat as string,
-      url: movie.url as string,
-      language: (movie.language as string) || ''
-    }));
-
-    return movies;
-  } catch (error) {
-    console.error('Error fetching movies:', error);
-    return [];
-  }
-}
-
-function MovieGrid({ movies }: { movies: Movie[] }) {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {movies.map((movie, index) => (
+      {sortedMovies.map((movie, index) => (
         <MovieCard key={movie._id} movie={movie} index={index} />
       ))}
     </div>
   );
 }
 
-export default async function ReviewsPage() {
-  const movies = await getAllMovies();
+export default function ReviewsPage() {
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [sortBy, setSortBy] = useState<SortOption>('added');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const response = await fetch('/api/movies');
+        
+        if (!response.ok) {
+          throw new Error(`Error fetching movies: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setMovies(data);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Failed to fetch movies:', err);
+        setError('Failed to load movies. Please try again later.');
+        setIsLoading(false);
+      }
+    };
+
+    fetchMovies();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleSortChange = (option: SortOption) => {
+    setSortBy(option);
+    setIsDropdownOpen(false);
+  };
 
   return (
     <div>
-      <h1 className="text-4xl font-serif mb-8">Film Reviews</h1>
-      <Suspense fallback={<div>Loading reviews...</div>}>
-        <MovieGrid movies={movies} />
-      </Suspense>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-serif">Film Reviews</h1>
+        
+        <div className="relative" ref={dropdownRef}>
+          <button
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/15 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            aria-expanded={isDropdownOpen}
+            aria-haspopup="listbox"
+            aria-controls="sort-options"
+          >
+            <span>Sort: {sortOptions.find(option => option.value === sortBy)?.label}</span>
+            <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {isDropdownOpen && (
+            <div 
+              id="sort-options"
+              role="listbox"
+              className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 z-10 overflow-hidden transform origin-top-right transition-all animate-in fade-in-50 zoom-in-95 duration-100"
+            >
+              <div className="py-1">
+                {sortOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${sortBy === option.value ? 'bg-slate-100 dark:bg-slate-800 font-medium text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                    onClick={() => handleSortChange(option.value as SortOption)}
+                    role="option"
+                    aria-selected={sortBy === option.value}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center p-12">
+          <div className="animate-pulse">Loading reviews...</div>
+        </div>
+      ) : error ? (
+        <div className="text-center p-8 text-red-500">
+          <p>{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-md text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      ) : (
+        <MovieGrid movies={movies} sortBy={sortBy} />
+      )}
     </div>
   );
 }
