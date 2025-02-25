@@ -2,9 +2,10 @@ import { getCollection } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 import { Document } from 'mongodb';
 
-// Enable ISR with 1 hour revalidation
-export const revalidate = 3600;
+// Reduce the revalidation time to 60 seconds for more frequent updates
+export const revalidate = 60;
 
+// Use cache tags for more granular control
 export async function GET() {
   try {
     const collection = await getCollection('scc', 'movies');
@@ -46,7 +47,12 @@ export async function GET() {
       language: (movie.language as string) || ''
     }));
 
-    return NextResponse.json(movies);
+    // Add cache-related headers for more control
+    return NextResponse.json(movies, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+      },
+    });
   } catch (error) {
     console.error('Error fetching movies:', error);
     return NextResponse.json(

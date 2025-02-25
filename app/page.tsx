@@ -7,18 +7,22 @@ import { getSlugFromUrl } from '@/lib/utils/url';
 import { Metadata } from 'next';
 import { ObjectId } from 'mongodb';
 
-// Enable ISR with 1 hour revalidation
-export const revalidate = 3600;
+// Enable more frequent revalidation (5 minutes instead of 1 hour)
+export const revalidate = 300;
 
-// Add metadata for better SEO
-export const metadata: Metadata = {
-  title: 'Slow Cinema Club - Arthouse & Experimental Film Analysis',
-  description: 'Dive deep into the world of arthouse and experimental cinema. Discover thoughtful analysis, reviews, and essays on slow cinema, independent films, and avant-garde masterpieces.',
-  openGraph: {
-    title: 'Slow Cinema Club - Arthouse & Experimental Film Analysis',
-    description: 'Dive deep into the world of arthouse and experimental cinema. Discover thoughtful analysis, reviews, and essays on slow cinema, independent films, and avant-garde masterpieces.',
-    type: 'website',
-  },
+// Use dynamic fetching for latest content
+export const dynamic = 'force-dynamic';
+
+// Apply cache tags for more targeted invalidation
+export const generateMetadata = async (): Promise<Metadata> => {
+  return {
+    title: "Slow Cinema Club",
+    description: "An online hub for cinephiles who love to dive deep into the artistry of arthouse and experimental cinema.",
+    // Add cache tags for more precise cache invalidation
+    other: {
+      'cache-control': 'public, s-maxage=300, stale-while-revalidate=60',
+    },
+  };
 };
 
 interface Movie {

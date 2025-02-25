@@ -3,19 +3,33 @@
 import { useState, useEffect, useRef } from "react";
 import { MovieCard, Movie } from "@/app/components/MovieCard";
 import { ChevronDown } from 'lucide-react';
+import useSWR from 'swr';
 
 type SortOption = 'added' | 'title' | 'year' | 'length' | 'rating';
 
 const sortOptions = [
-  { value: 'added', label: 'Added (newest first)' },
-  { value: 'title', label: 'Title (alphabetical)' },
-  { value: 'year', label: 'Year (newest first)' },
-  { value: 'length', label: 'Length (longest first)' },
-  { value: 'rating', label: 'Rating (highest first)' }
+  { label: 'Recently Added', value: 'added' },
+  { label: 'Title (A-Z)', value: 'title' },
+  { label: 'Year (New to Old)', value: 'year' },
+  { label: 'Length (Short to Long)', value: 'length' },
+  { label: 'Rating (High to Low)', value: 'rating' }
 ];
 
+// Fetch movies with SWR
+const fetcher = (url: string) => 
+  fetch(url, {
+    // Add cache control headers for the browser
+    cache: 'no-store',
+    headers: {
+      'pragma': 'no-cache',
+      'cache-control': 'no-cache',
+    }
+  }).then(res => {
+    if (!res.ok) throw new Error('Failed to fetch movies');
+    return res.json();
+  });
+
 function MovieGrid({ movies, sortBy }: { movies: Movie[], sortBy: SortOption }) {
-  // Sort movies based on the selected option
   const sortedMovies = [...movies].sort((a, b) => {
     switch (sortBy) {
       case 'title':
@@ -23,17 +37,23 @@ function MovieGrid({ movies, sortBy }: { movies: Movie[], sortBy: SortOption }) 
       case 'year':
         return parseInt(b.year) - parseInt(a.year);
       case 'length':
-        return parseInt(b.duration) - parseInt(a.duration);
+        const getDuration = (movie: Movie) => {
+          if (!movie.duration) return 0;
+          const match = movie.duration.match(/^(\d+)m$/);
+          return match ? parseInt(match[1]) : 0;
+        };
+        return getDuration(a) - getDuration(b);
       case 'rating':
         return b.rating - a.rating;
       case 'added':
       default:
-        return new Date(b.updatedAd).getTime() - new Date(a.updatedAd).getTime();
+        // Assume updatedAd is a date string
+        return new Date(b.updatedAd || 0).getTime() - new Date(a.updatedAd || 0).getTime();
     }
   });
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {sortedMovies.map((movie, index) => (
         <MovieCard key={movie._id} movie={movie} index={index} />
       ))}
@@ -42,34 +62,21 @@ function MovieGrid({ movies, sortBy }: { movies: Movie[], sortBy: SortOption }) 
 }
 
 export default function ReviewsPage() {
-  const [movies, setMovies] = useState<Movie[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('added');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const fetchMovies = async () => {
-      try {
-        const response = await fetch('/api/movies');
-        
-        if (!response.ok) {
-          throw new Error(`Error fetching movies: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setMovies(data);
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Failed to fetch movies:', err);
-        setError('Failed to load movies. Please try again later.');
-        setIsLoading(false);
-      }
-    };
-
-    fetchMovies();
-  }, []);
+  
+  // Use SWR for data fetching with revalidation
+  const { data: movies, error, isLoading } = useSWR<Movie[]>(
+    '/api/movies', 
+    fetcher,
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      refreshInterval: 30000, // Refresh every 30 seconds
+      dedupingInterval: 5000 // Only dedupe requests within 5 seconds
+    }
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -136,7 +143,7 @@ export default function ReviewsPage() {
         </div>
       ) : error ? (
         <div className="text-center p-8 text-red-500">
-          <p>{error}</p>
+          <p>{error.message || 'Failed to load movies. Please try again later.'}</p>
           <button 
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-md text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -144,9 +151,9 @@ export default function ReviewsPage() {
             Try Again
           </button>
         </div>
-      ) : (
+      ) : movies ? (
         <MovieGrid movies={movies} sortBy={sortBy} />
-      )}
+      ) : null}
     </div>
   );
 }
