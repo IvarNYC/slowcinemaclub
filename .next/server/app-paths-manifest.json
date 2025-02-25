@@ -10,6 +10,6 @@
   "/articles/page": "app/articles/page.js",
   "/lists/page": "app/lists/page.js",
   "/reviews/page": "app/reviews/page.js",
-  "/page": "app/page.js",
-  "/reviews/[slug]/page": "app/reviews/[slug]/page.js"
+  "/reviews/[slug]/page": "app/reviews/[slug]/page.js",
+  "/page": "app/page.js"
 }

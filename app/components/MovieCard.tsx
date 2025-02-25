@@ -53,11 +53,15 @@ export function MovieCard({ movie, index }: { movie: Movie; index: number }) {
               {movie.director}
             </p>
             <div className="flex items-center gap-2 text-sm text-muted-foreground/80">
-              <span className="flex items-center gap-1">
-                <span className="text-yellow-400">★</span>
-                <span>{movie.rating}</span>
-              </span>
-              <span className="text-muted-foreground/60">•</span>
+              {movie.rating > 0 && (
+                <>
+                  <span className="flex items-center gap-1">
+                    <span className="text-yellow-400">★</span>
+                    <span>{movie.rating}</span>
+                  </span>
+                  <span className="text-muted-foreground/60">•</span>
+                </>
+              )}
               <span>{movie.duration} min</span>
             </div>
           </div>
