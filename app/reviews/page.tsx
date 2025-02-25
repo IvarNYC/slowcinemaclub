@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { getCollection } from "@/lib/mongodb";
-import { MovieCard } from "@/app/components/MovieCard";
+import { MovieCard, Movie } from "@/app/components/MovieCard";
 import { Metadata } from 'next';
-import Link from 'next/link';
+import { Document } from 'mongodb';
 
 // Enable ISR with 1 hour revalidation
 export const revalidate = 3600;
@@ -18,92 +18,52 @@ export const metadata: Metadata = {
   },
 };
 
-interface Movie {
-  _id: string;
-  title: string;
-  imageurl: string;
-  imagepreviewurl: string;
-  director: string;
-  year: string;
-  description: string;
-  rating: number;
-  duration: string;
-  updatedat: string;
-  url: string;
-}
-
-const ITEMS_PER_PAGE = 12;
-
-async function getMovies(page: number = 1): Promise<{ movies: Movie[], total: number }> {
+async function getAllMovies(): Promise<Movie[]> {
   try {
     const collection = await getCollection('scc', 'movies');
-    const skip = (page - 1) * ITEMS_PER_PAGE;
     
-    const [moviesRaw, total] = await Promise.all([
-      collection
-        .find(
-          {},
-          {
-            projection: {
-              _id: 1,
-              title: 1,
-              imagepreviewurl: 1,
-              director: 1,
-              year: 1,
-              description: 1,
-              rating: 1,
-              duration: 1,
-              updatedat: 1,
-              url: 1
-            },
-          }
-        )
-        .sort({ updatedat: -1 })
-        .skip(skip)
-        .limit(ITEMS_PER_PAGE)
-        .toArray(),
-      collection.countDocuments()
-    ]);
+    const moviesRaw = await collection
+      .find(
+        {},
+        {
+          projection: {
+            _id: 1,
+            title: 1,
+            imagepreviewurl: 1,
+            director: 1,
+            year: 1,
+            description: 1,
+            rating: 1,
+            duration: 1,
+            updatedat: 1,
+            url: 1,
+            language: 1
+          },
+        }
+      )
+      .sort({ updatedat: -1 })
+      .toArray();
 
-    // Serialize MongoDB documents to plain objects
-    const movies = moviesRaw.map(movie => ({
-      ...movie,
-      _id: movie._id.toString()
+    // Serialize MongoDB documents to plain objects and ensure all required fields are present
+    const movies: Movie[] = moviesRaw.map((movie: Document) => ({
+      _id: movie._id.toString(),
+      title: movie.title as string,
+      imagepreviewurl: movie.imagepreviewurl as string,
+      director: movie.director as string,
+      year: movie.year as string,
+      description: movie.description as string,
+      rating: movie.rating as number,
+      duration: movie.duration as string,
+      updatedat: movie.updatedat as string,
+      url: movie.url as string,
+      language: (movie.language as string) || ''
     }));
 
-    return { movies, total };
+    return movies;
   } catch (error) {
     console.error('Error fetching movies:', error);
-    return { movies: [], total: 0 };
+    return [];
   }
-}
-
-function PaginationControls({ currentPage, totalPages }: { currentPage: number; totalPages: number }) {
-  return (
-    <div className="mt-12 flex justify-center gap-2">
-      {currentPage > 1 && (
-        <Link
-          href={`/reviews?page=${currentPage - 1}`}
-          className="px-4 py-2 border rounded hover:bg-muted"
-          rel="prev"
-        >
-          Previous
-        </Link>
-      )}
-      <span className="px-4 py-2">
-        Page {currentPage} of {totalPages}
-      </span>
-      {currentPage < totalPages && (
-        <Link
-          href={`/reviews?page=${currentPage + 1}`}
-          className="px-4 py-2 border rounded hover:bg-muted"
-          rel="next"
-        >
-          Next
-        </Link>
-      )}
-    </div>
-  );
 }
 
 function MovieGrid({ movies }: { movies: Movie[] }) {
@@ -116,22 +76,14 @@ function MovieGrid({ movies }: { movies: Movie[] }) {
   );
 }
 
-export default async function ReviewsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const params = await searchParams;
-  const currentPage = Number(params.page) || 1;
-  const { movies, total } = await getMovies(currentPage);
-  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+export default async function ReviewsPage() {
+  const movies = await getAllMovies();
 
   return (
     <div>
       <h1 className="text-4xl font-serif mb-8">Film Reviews</h1>
       <Suspense fallback={<div>Loading reviews...</div>}>
         <MovieGrid movies={movies} />
-        <PaginationControls currentPage={currentPage} totalPages={totalPages} />
       </Suspense>
     </div>
   );
