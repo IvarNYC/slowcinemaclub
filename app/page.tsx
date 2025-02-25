@@ -5,6 +5,7 @@ import { getCollection } from "@/lib/mongodb";
 import { MovieCard } from "./components/MovieCard";
 import { getSlugFromUrl } from '@/lib/utils/url';
 import { Metadata } from 'next';
+import { ObjectId } from 'mongodb';
 
 // Enable ISR with 1 hour revalidation
 export const revalidate = 3600;
@@ -73,7 +74,7 @@ async function getLatestReviews(): Promise<Movie[]> {
   }
 }
 
-async function getFeaturedReviews(): Promise<Movie[]> {
+async function getFeaturedReviews(latestReviewIds: string[]): Promise<Movie[]> {
   try {
     const collection = await getCollection('scc', 'movies');
     
@@ -82,9 +83,16 @@ async function getFeaturedReviews(): Promise<Movie[]> {
     const startOfYear = new Date(now.getFullYear(), 0, 1);
     const weekNumber = Math.ceil((((now.getTime() - startOfYear.getTime()) / 86400000) + startOfYear.getDay() + 1) / 7);
     
+    // Create a query that excludes the latest reviews
+    const query = {
+      _id: { $nin: latestReviewIds.map(id => new ObjectId(id)) }
+    };
+    
     // Use week number to skip a deterministic number of documents
     const aggregation = [
-      // First, sort by a consistent field to ensure stable ordering
+      // First, filter out the latest reviews
+      { $match: query },
+      // Then sort by a consistent field to ensure stable ordering
       { $sort: { title: 1 } },
       // Skip a number of documents based on the week number
       { $skip: ((weekNumber - 1) * 2) % 50 }, // Assuming we have at least 50 movies
@@ -103,14 +111,15 @@ async function getFeaturedReviews(): Promise<Movie[]> {
       }
     ];
 
-    const movies = await collection.aggregate(aggregation).toArray();
+    let movies = await collection.aggregate(aggregation).toArray();
     
     // If we don't get enough movies (e.g., at the end of our collection),
-    // start from the beginning
+    // start from the beginning but still exclude latest reviews
     if (movies.length < 2) {
       const remainingCount = 2 - movies.length;
       const additionalMovies = await collection
         .aggregate([
+          { $match: query },
           { $sort: { title: 1 } },
           { $limit: remainingCount },
           {
@@ -131,6 +140,47 @@ async function getFeaturedReviews(): Promise<Movie[]> {
       movies.push(...additionalMovies);
     }
 
+    // Double check: If we still don't have 2 movies or somehow got latest reviews, 
+    // get more movies and filter out the latest reviews
+    if (movies.length < 2 || movies.some(movie => latestReviewIds.includes(movie._id.toString()))) {
+      // Fetch more movies (up to 10) to ensure we have options
+      const backupMovies = await collection
+        .aggregate([
+          { $match: query },
+          { $sort: { updatedAd: -1 } }, // Sort by update date as a fallback
+          { $limit: 10 },
+          {
+            $project: {
+              _id: 1,
+              title: 1,
+              imageurl: 1,
+              imagepreviewurl: 1,
+              director: 1,
+              year: 1,
+              url: 1,
+              language: 1
+            }
+          }
+        ])
+        .toArray();
+      
+      // Filter out any that might be in the latest reviews
+      const safeMovies = backupMovies.filter(movie => 
+        !latestReviewIds.includes(movie._id.toString())
+      );
+      
+      // If we have backups, use them to replace any missing or duplicate featured reviews
+      if (safeMovies.length > 0) {
+        // Replace any featured reviews that are in latest reviews
+        movies = movies.filter(movie => !latestReviewIds.includes(movie._id.toString()));
+        
+        // Fill up to 2 movies from our safe backup list
+        while (movies.length < 2 && safeMovies.length > 0) {
+          movies.push(safeMovies.shift()!);
+        }
+      }
+    }
+
     return movies.map(movie => ({
       ...movie,
       _id: movie._id.toString()
@@ -142,10 +192,11 @@ async function getFeaturedReviews(): Promise<Movie[]> {
 }
 
 export default async function Home() {
-  const [latestReviews, featuredReviews] = await Promise.all([
-    getLatestReviews(),
-    getFeaturedReviews()
-  ]);
+  // Get the latest reviews first
+  const latestReviews = await getLatestReviews();
+  
+  // Get featured reviews, passing the latestReviewIds to avoid duplicate DB calls
+  const featuredReviews = await getFeaturedReviews(latestReviews.map(movie => movie._id));
 
   return (
     <div className="space-y-24">
