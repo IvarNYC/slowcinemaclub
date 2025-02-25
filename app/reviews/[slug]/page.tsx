@@ -179,11 +179,15 @@ function MovieHero({ movie }: { movie: Movie }) {
             {movie.title} <span className="text-white/80">({movie.year})</span>
           </h1>
           <div className="flex flex-wrap items-center gap-3 text-sm text-white/80">
-            <div className="flex items-center gap-1 text-white">
-              <span className="text-yellow-400">★</span> 
-              <span className="font-medium">{movie.rating.toFixed(1)} ({movie.votecount})</span>
-            </div>
-            <span>•</span>
+            {movie.rating > 0 && movie.votecount > 0 && (
+              <>
+                <div className="flex items-center gap-1 text-white">
+                  <span className="text-yellow-400">★</span> 
+                  <span className="font-medium">{movie.rating.toFixed(1)} ({movie.votecount})</span>
+                </div>
+                <span>•</span>
+              </>
+            )}
             <span>{movie.duration} minutes</span>
             <span>•</span>
             <span>{getEnglishLanguage(movie.language)}</span>
@@ -203,10 +207,12 @@ function MovieDetails({ movie }: { movie: Movie }) {
           <p className="text-lg">{movie.director}</p>
         </div>
         
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm uppercase tracking-wider text-muted-foreground">Cast</h2>
-          <p className="text-lg">{movie.cast}</p>
-        </div>
+        {movie.cast && movie.cast.trim() !== '' && (
+          <div className="flex flex-col gap-2">
+            <h2 className="text-sm uppercase tracking-wider text-muted-foreground">Cast</h2>
+            <p className="text-lg">{movie.cast}</p>
+          </div>
+        )}
       </div>
 
       <div className="prose prose-neutral dark:prose-invert max-w-none [&>p]:text-muted-foreground [&>p]:my-4 first:[&>p]:mt-0 prose-hr:hidden [&>*]:border-none [&_*]:border-none">
