@@ -30,8 +30,10 @@ interface Movie {
   description: string;
   rating: number;
   updatedat: string;
+  updatedAd: string;
   url: string;
   language: string;
+  duration: string;
 }
 
 async function getLatestReviews(): Promise<Movie[]> {
@@ -50,10 +52,12 @@ async function getLatestReviews(): Promise<Movie[]> {
             description: 1,
             rating: 1,
             updatedat: 1,
+            updatedAd: 1,
             url: 1,
-            language: 1
+            language: 1,
+            duration: 1
           },
-          sort: { updatedat: -1 },
+          sort: { updatedAd: -1 },
           limit: 3
         }
       )
@@ -173,8 +177,8 @@ export default async function Home() {
         </div>
         <div className="relative">
           <div className="grid gap-6 md:grid-cols-3">
-            {latestReviews.map((movie) => (
-              <MovieCard key={movie._id} movie={movie} />
+            {latestReviews.map((movie, index) => (
+              <MovieCard key={movie._id} movie={movie} index={index} />
             ))}
           </div>
           <Link 
@@ -271,7 +275,7 @@ export default async function Home() {
               New Articles Coming in March
             </h3>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              We’re working on a series of in-depth articles exploring the influence of slow cinema 
+              We're working on a series of in-depth articles exploring the influence of slow cinema 
               on contemporary filmmaking. Stay tuned for thought-provoking analysis and insights.
             </p>
           </div>
@@ -285,7 +289,7 @@ export default async function Home() {
             About Slow Cinema Club
           </h2>
           <p className="text-muted-foreground">
-          We’re a dedicated online space for cinephiles who crave deeper engagement with arthouse and experimental cinema. From the meditative narratives of Andrei Tarkovsky to the poetic, dreamlike frames of Wong Kar-wai and the intimate storytelling of Agnès Varda, our platform goes beyond the mainstream to offer rich, thought-provoking analysis.
+          We're a dedicated online space for cinephiles who crave deeper engagement with arthouse and experimental cinema. From the meditative narratives of Andrei Tarkovsky to the poetic, dreamlike frames of Wong Kar-wai and the intimate storytelling of Agnès Varda, our platform goes beyond the mainstream to offer rich, thought-provoking analysis.
 </p>
         </div>
         <div className="space-y-4">
