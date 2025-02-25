@@ -215,7 +215,7 @@ function MovieDetails({ movie }: { movie: Movie }) {
         )}
       </div>
 
-      <div className="prose prose-neutral dark:prose-invert max-w-none [&>p]:text-muted-foreground [&>p]:my-4 first:[&>p]:mt-0 prose-hr:hidden [&>*]:border-none [&_*]:border-none">
+      <div className="prose prose-neutral dark:prose-invert max-w-none text-lg [&>p]:text-muted-foreground [&>p]:my-4 first:[&>p]:mt-0 prose-hr:hidden [&>*]:border-none [&_*]:border-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {movie.description}
         </ReactMarkdown>

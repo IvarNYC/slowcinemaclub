@@ -1,0 +1,3 @@
+{
+  "/reviews/[slug]/page": "app/reviews/[slug]/page.js"
+}
