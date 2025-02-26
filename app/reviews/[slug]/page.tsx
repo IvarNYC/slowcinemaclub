@@ -89,7 +89,7 @@ function MovieStructuredData({ movie }: { movie: Movie }) {
     reviewRating: {
       '@type': 'Rating',
       ratingValue: movie.rating,
-      bestRating: '10',
+      bestRating: '5',
       worstRating: '1',
       ratingCount: movie.votecount
     }
@@ -271,7 +271,7 @@ function MovieHero({ movie }: { movie: Movie }) {
                     <span itemProp="ratingValue">{movie.rating.toFixed(1)}</span> 
                     (<span itemProp="ratingCount">{movie.votecount}</span>)
                   </span>
-                  <meta itemProp="bestRating" content="10" />
+                  <meta itemProp="bestRating" content="5" />
                   <meta itemProp="worstRating" content="1" />
                 </div>
                 <span aria-hidden="true">•</span>
@@ -337,15 +337,17 @@ function MovieDetails({ movie }: { movie: Movie }) {
             <dt className="text-muted-foreground">Duration</dt>
             <dd itemProp="duration">{movie.duration} minutes</dd>
           </div>
-          <div>
-            <dt className="text-muted-foreground">Rating</dt>
-            <dd>
-              <div className="inline-flex items-center gap-1">
-                <span className="text-yellow-400">★</span> 
-                <span>{movie.rating.toFixed(1)}/10</span>
-              </div>
-            </dd>
-          </div>
+          {movie.rating > 0 && (
+            <div>
+              <dt className="text-muted-foreground">Rating</dt>
+              <dd>
+                <div className="inline-flex items-center gap-1">
+                  <span className="text-yellow-400">★</span> 
+                  <span>{movie.rating.toFixed(1)}/5</span>
+                </div>
+              </dd>
+            </div>
+          )}
         </dl>
       </section>
     </div>
