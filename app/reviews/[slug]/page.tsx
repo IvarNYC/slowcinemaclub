@@ -47,6 +47,9 @@ function MovieStructuredData({ movie }: { movie: Movie }) {
   };
 
   const publishDate = getValidDate(movie.updatedat || movie.updatedAd || '');
+  
+  // Ensure rating is within valid range (1-5)
+  const safeRating = Math.max(1, Math.min(5, movie.rating || 1));
 
   const structuredData = {
     '@context': 'https://schema.org',
@@ -55,7 +58,7 @@ function MovieStructuredData({ movie }: { movie: Movie }) {
     reviewBody: movie.description.substring(0, 500) + '...',
     datePublished: publishDate.toISOString(),
     author: {
-      '@type': 'Organization',
+      '@type': 'Person', // Changed from Organization to Person
       name: 'Slow Cinema Club',
       url: 'https://slowcinemaclub.com'
     },
@@ -88,10 +91,10 @@ function MovieStructuredData({ movie }: { movie: Movie }) {
     },
     reviewRating: {
       '@type': 'Rating',
-      ratingValue: movie.rating,
-      bestRating: '5',
-      worstRating: '1',
-      ratingCount: movie.votecount
+      ratingValue: safeRating, // Ensure rating is always provided and in range
+      bestRating: 5, // Use number instead of string
+      worstRating: 1, // Use number instead of string
+      ratingCount: movie.votecount || 1
     }
   };
 
@@ -400,9 +403,15 @@ export default async function Page({
         itemType="https://schema.org/Review"
         aria-labelledby="movie-title"
       >
-        <meta itemProp="author" content="Slow Cinema Club" />
+        <meta itemProp="author" itemScope itemType="https://schema.org/Person" content="Slow Cinema Club" />
+        <meta itemProp="name" content={`${movie.title} (${movie.year}) - Film Review`} />
         <meta itemProp="datePublished" content={validDate.toISOString()} />
-        <meta itemProp="reviewRating" content={movie.rating.toString()} />
+        
+        <div itemProp="reviewRating" itemScope itemType="https://schema.org/Rating">
+          <meta itemProp="ratingValue" content={Math.max(1, Math.min(5, movie.rating || 1)).toString()} />
+          <meta itemProp="bestRating" content="5" />
+          <meta itemProp="worstRating" content="1" />
+        </div>
         
         <div itemProp="itemReviewed" itemScope itemType="https://schema.org/Movie">
           <meta itemProp="name" content={movie.title} />
