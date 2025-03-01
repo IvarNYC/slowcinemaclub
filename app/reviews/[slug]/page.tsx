@@ -58,9 +58,8 @@ function MovieStructuredData({ movie }: { movie: Movie }) {
     reviewBody: movie.description.substring(0, 500) + '...',
     datePublished: publishDate.toISOString(),
     author: {
-      '@type': 'Person', // Changed from Organization to Person
-      name: 'Slow Cinema Club',
-      url: 'https://slowcinemaclub.com'
+      '@type': 'Person',
+      name: 'Slow Cinema Club'
     },
     publisher: {
       '@type': 'Organization',
@@ -403,7 +402,9 @@ export default async function Page({
         itemType="https://schema.org/Review"
         aria-labelledby="movie-title"
       >
-        <meta itemProp="author" itemScope itemType="https://schema.org/Person" content="Slow Cinema Club" />
+        <div itemProp="author" itemScope itemType="https://schema.org/Person">
+          <meta itemProp="name" content="Slow Cinema Club" />
+        </div>
         <meta itemProp="name" content={`${movie.title} (${movie.year}) - Film Review`} />
         <meta itemProp="datePublished" content={validDate.toISOString()} />
         
