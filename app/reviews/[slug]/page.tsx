@@ -54,46 +54,38 @@ function MovieStructuredData({ movie }: { movie: Movie }) {
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'Review',
-    name: `${movie.title} (${movie.year}) - Film Review`,
-    reviewBody: movie.description.substring(0, 500) + '...',
-    datePublished: publishDate.toISOString(),
-    author: {
+    'author': {
       '@type': 'Person',
-      name: 'Slow Cinema Club'
+      'name': 'Slow Cinema Club'
     },
-    publisher: {
+    'name': `${movie.title} (${movie.year}) - Film Review`,
+    'reviewBody': movie.description.substring(0, 500) + '...',
+    'datePublished': publishDate.toISOString(),
+    'publisher': {
       '@type': 'Organization',
-      name: 'Slow Cinema Club',
-      url: 'https://slowcinemaclub.com',
-      logo: {
+      'name': 'Slow Cinema Club',
+      'url': 'https://slowcinemaclub.com',
+      'logo': {
         '@type': 'ImageObject',
-        url: 'https://slowcinemaclub.com/logo.png'
+        'url': 'https://slowcinemaclub.com/logo.png'
       }
     },
-    itemReviewed: {
+    'itemReviewed': {
       '@type': 'Movie',
-      name: movie.title,
-      image: movie.imageurl,
-      director: {
+      'name': movie.title,
+      'image': movie.imageurl,
+      'director': {
         '@type': 'Person',
-        name: movie.director
+        'name': movie.director
       },
-      actor: movie.cast.split(',').map(actor => ({
-        '@type': 'Person',
-        name: actor.trim()
-      })),
-      datePublished: movie.year,
-      duration: `PT${movie.duration}M`,
-      inLanguage: getEnglishLanguage(movie.language),
-      description: movie.description.substring(0, 200) + '...',
-      url: `https://slowcinemaclub.com/reviews/${movie.url}`
+      'datePublished': movie.year,
+      'duration': `PT${movie.duration}M`
     },
-    reviewRating: {
+    'reviewRating': {
       '@type': 'Rating',
-      ratingValue: safeRating, // Ensure rating is always provided and in range
-      bestRating: 5, // Use number instead of string
-      worstRating: 1, // Use number instead of string
-      ratingCount: movie.votecount || 1
+      'ratingValue': safeRating,
+      'bestRating': 5,
+      'worstRating': 1
     }
   };
 
@@ -251,7 +243,6 @@ function MovieHero({ movie }: { movie: Movie }) {
           priority
           quality={90}
           sizes="(min-width: 768px) 100vw, 100vw"
-          itemProp="image"
         />
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" aria-hidden="true" />
@@ -260,28 +251,25 @@ function MovieHero({ movie }: { movie: Movie }) {
           <h1 
             id="movie-title"
             className="text-4xl md:text-5xl font-medium tracking-tight text-white drop-shadow-sm" 
-            itemProp="name"
           >
             {movie.title} <span className="text-white/80">({movie.year})</span>
           </h1>
           <div className="flex flex-wrap items-center gap-3 text-sm text-white/80">
             {movie.rating > 0 && movie.votecount > 0 && (
               <>
-                <div className="flex items-center gap-1 text-white" itemProp="aggregateRating" itemScope itemType="https://schema.org/AggregateRating">
+                <div className="flex items-center gap-1 text-white">
                   <span className="text-yellow-400">★</span> 
                   <span className="font-medium">
-                    <span itemProp="ratingValue">{movie.rating.toFixed(1)}</span> 
-                    (<span itemProp="ratingCount">{movie.votecount}</span>)
+                    {movie.rating.toFixed(1)} 
+                    ({movie.votecount})
                   </span>
-                  <meta itemProp="bestRating" content="5" />
-                  <meta itemProp="worstRating" content="1" />
                 </div>
                 <span aria-hidden="true">•</span>
               </>
             )}
-            <span itemProp="duration">{movie.duration} minutes</span>
+            <span>{movie.duration} minutes</span>
             <span aria-hidden="true">•</span>
-            <span itemProp="inLanguage">{getEnglishLanguage(movie.language)}</span>
+            <span>{getEnglishLanguage(movie.language)}</span>
           </div>
         </div>
       </div>
@@ -295,8 +283,8 @@ function MovieDetails({ movie }: { movie: Movie }) {
       <div className="space-y-6">
         <div className="flex flex-col gap-2">
           <h2 className="text-sm uppercase tracking-wider text-muted-foreground">Director</h2>
-          <p className="text-2xl" itemProp="director" itemScope itemType="https://schema.org/Person">
-            <span itemProp="name">{movie.director}</span>
+          <p className="text-2xl">
+            {movie.director}
           </p>
         </div>
         
@@ -305,8 +293,8 @@ function MovieDetails({ movie }: { movie: Movie }) {
             <h2 className="text-sm uppercase tracking-wider text-muted-foreground">Cast</h2>
             <p className="text-2xl">
               {movie.cast.split(',').map((actor, index, array) => (
-                <span key={actor} itemProp="actor" itemScope itemType="https://schema.org/Person">
-                  <span itemProp="name">{actor.trim()}</span>
+                <span key={actor}>
+                  {actor.trim()}
                   {index < array.length - 1 && <span className="mx-1" aria-hidden="true">,</span>}
                 </span>
               ))}
@@ -317,7 +305,6 @@ function MovieDetails({ movie }: { movie: Movie }) {
 
       <div 
         className="prose prose-neutral dark:prose-invert max-w-none text-2xl [&>p]:text-muted-foreground [&>p]:my-4 first:[&>p]:mt-0 prose-hr:hidden [&>*]:border-none [&_*]:border-none [&>h1]:text-4xl [&>h2]:text-3xl [&>h3]:text-2xl"
-        itemProp="reviewBody"
       >
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {movie.description}
@@ -329,15 +316,15 @@ function MovieDetails({ movie }: { movie: Movie }) {
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div>
             <dt className="text-muted-foreground">Release Year</dt>
-            <dd itemProp="dateCreated">{movie.year}</dd>
+            <dd>{movie.year}</dd>
           </div>
           <div>
             <dt className="text-muted-foreground">Language</dt>
-            <dd itemProp="inLanguage">{getEnglishLanguage(movie.language)}</dd>
+            <dd>{getEnglishLanguage(movie.language)}</dd>
           </div>
           <div>
             <dt className="text-muted-foreground">Duration</dt>
-            <dd itemProp="duration">{movie.duration} minutes</dd>
+            <dd>{movie.duration} minutes</dd>
           </div>
           {movie.rating > 0 && (
             <div>
@@ -398,29 +385,8 @@ export default async function Page({
       
       <article 
         className="mx-auto max-w-4xl"
-        itemScope 
-        itemType="https://schema.org/Review"
         aria-labelledby="movie-title"
       >
-        <div itemProp="author" itemScope itemType="https://schema.org/Person">
-          <meta itemProp="name" content="Slow Cinema Club" />
-        </div>
-        <meta itemProp="name" content={`${movie.title} (${movie.year}) - Film Review`} />
-        <meta itemProp="datePublished" content={validDate.toISOString()} />
-        
-        <div itemProp="reviewRating" itemScope itemType="https://schema.org/Rating">
-          <meta itemProp="ratingValue" content={Math.max(1, Math.min(5, movie.rating || 1)).toString()} />
-          <meta itemProp="bestRating" content="5" />
-          <meta itemProp="worstRating" content="1" />
-        </div>
-        
-        <div itemProp="itemReviewed" itemScope itemType="https://schema.org/Movie">
-          <meta itemProp="name" content={movie.title} />
-          <meta itemProp="director" content={movie.director} />
-          <meta itemProp="datePublished" content={movie.year} />
-          <meta itemProp="inLanguage" content={getEnglishLanguage(movie.language)} />
-        </div>
-        
         <Suspense fallback={<div className="aspect-[2/1] rounded-xl bg-muted animate-pulse mb-16" role="status" aria-label="Loading movie hero" />}>
           <MovieHero movie={movie} />
         </Suspense>
