@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import Script from "next/script";
 import { inter, playfair } from './fonts';
 import { Breadcrumbs } from './components/Breadcrumbs';
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: "Slow Cinema Club",
@@ -127,6 +128,7 @@ export default function RootLayout({
         <main className="container mx-auto px-6 pt-24 pb-16">
           {children}
         </main>
+        <Analytics />
       </body>
     </html>
   );
